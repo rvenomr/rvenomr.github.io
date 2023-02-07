@@ -90,7 +90,7 @@ canvas.addEventListener("touchmove", function (e) {
 canvas.addEventListener("mousemove", function(e) {
   if (isToucheEnd){
     var rect = canvas.getBoundingClientRect();
-    cursX = e.pageX
+    cursX = e.pageX - rect.left;
     cursY = e.pageY - rect.top
     isToucheEnd = false;
      console.log("MOUSEMOVE after TOUCHEND")
