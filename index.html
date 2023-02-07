@@ -4,9 +4,17 @@
          height : 100%;
          width : 100%;
       }
-      canvas { 
-         height: 100%;
-         width: 100%;
+      canvas {
+        padding: 0;
+        margin: auto;
+        display: block;
+        width: 1400px;
+        height: 800px;
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        left: 0;
+        right: 0;
       }
    </style>
   <body style="background-color:black;">
@@ -21,7 +29,7 @@ const randomRange = (min, max) => {
   return Math.random() * (max - min) + min;
 }
 
-function getTouchPos(canvasDom, touchEvent) {
+const getTouchPos = (canvasDom, touchEvent) => {
   var rect = canvasDom.getBoundingClientRect();
   return {
     x: touchEvent.touches[0].clientX - rect.left,
@@ -40,41 +48,59 @@ var canvas = document.getElementById("canvas");
 var width = canvas.width;
 var height = canvas.height;
 var context = canvas.getContext("2d");
+var isToucheEnd = false;
 
 canvas.addEventListener("touchstart", function (e) {
-        mousePos = getTouchPos(canvas, e);
-  var touch = e.touches[0];
+  var touch = e.touches[0]
+  var rect = canvas.getBoundingClientRect();
   var mouseEvent = new MouseEvent("mousedown", {
-    clientX: touch.clientX,
-    clientY: touch.clientY
+    clientX: touch.clientX - rect.left,
+    clientY: touch.clientY - rect.top
   });
-  cursX = touch.clientX;
-  cursY = touch.clientY;
+  cursX = touch.clientX - rect.left,
+  cursY = touch.clientY - rect.top;
+  //console.log(cursX)
+  //console.log(cursY)
+  console.log("touchstart")
   canvas.dispatchEvent(mouseEvent);
-  
 }, false);
+
 canvas.addEventListener("touchend", function (e) {
   var mouseEvent = new MouseEvent("mouseup", {});
+  console.log("touchend");
+  isToucheEnd = true;
   canvas.dispatchEvent(mouseEvent);
 }, false);
 
 canvas.addEventListener("touchmove", function (e) {
-  var touch = e.touches[0];
+  var touch = e.touches[0]
+  var rect = canvas.getBoundingClientRect();
   var mouseEvent = new MouseEvent("mousemove", {
-    clientX: touch.clientX,
-    clientY: touch.clientY
+    clientX: touch.clientX - rect.left,
+    clientY: touch.clientY - rect.top
   });
-  cursX = touch.clientX;
-  cursY = touch.clientY;
+  cursX = touch.clientX - rect.left;
+  cursY = touch.clientY - rect.top;
+  console.log(cursX)
+  console.log(touch.clientX)
   canvas.dispatchEvent(mouseEvent);
   draw();
 }, false);
 
-document.addEventListener("mousemove", function(e) {
-  context.clearRect(0, 0, canvas.width, canvas.height);
-  cursX = e.pageX,
-  cursY =  e.pageY
-  draw();
+canvas.addEventListener("mousemove", function(e) {
+  if (isToucheEnd){
+    var rect = canvas.getBoundingClientRect();
+    cursX = e.pageX
+    cursY = e.pageY - rect.top
+    isToucheEnd = false;
+     console.log("MOUSEMOVE after TOUCHEND")
+    draw();
+  } else {
+    cursX = e.pageX
+    cursY = e.pageY
+    console.log("MOUSEMOVE");
+    draw();
+  }
 })
 
 window.addEventListener("unload", function(){
@@ -87,13 +113,6 @@ const getDistance =(x1, y1, x2, y2) => {
     return Math.sqrt(dx * dx + dy * dy);
 }
 
-const onMouseMove = (e) => {
-  cursX = e.pageX;
-  cursY = e.pageY;
-  manager.render();
-}
-
-document.addEventListener("mousemove", onMouseMove)
 const typeCanvas = document.createElement('canvas');
 const typeContext = typeCanvas.getContext('2d') //{willReadFrequently: true});
 
@@ -110,7 +129,6 @@ function draw(){
   typeCanvas.height = rows;
 
   const margx = (width - gridw) * 0.5;
-  console.log(margx);
   const margy = (height - gridh) * 0.5;
 
   typeContext.fillStyle = 'white';
