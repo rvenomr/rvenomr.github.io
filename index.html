@@ -1,15 +1,13 @@
 <html>
 <head>
-  <meta name="viewport" 
-      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+<META name="viewport" content="initial-scale=0.5, user-scalable=no"> 
 <style>
-  body {
+  * {
     margin: 0;
     padding: 0;
       }
   #container {
     margin: 0 auto;
-    width: 800px;
     overflow: hidden;
   }
   canvas {
@@ -46,12 +44,11 @@ let flag = [];
 let cursX;
 let cursY;
 var canvas = document.getElementById("canvas");
-var width = canvas.width;
-var height = canvas.height;
+var width;
+var height;
 var context = canvas.getContext("2d");
 var isToucheEnd = false;
 var isTouchDevice = false;
-document.body.classList.add("stop-scrolling");
 
 window.addEventListener("touchstart", function (e) {
   isTouchDevice = true;
@@ -130,6 +127,10 @@ const typeCanvas = document.createElement('canvas');
 const typeContext = typeCanvas.getContext('2d') //{willReadFrequently: true});
 
 function draw(){
+  //canvas.width = window.innerWidth;
+  //canvas.height = window.innerHeight;
+  width = canvas.width;
+  height = canvas.height;
   const cell = 10;
   const gridw = width  * 0.8;
   const gridh = height * 0.8
@@ -159,7 +160,7 @@ function draw(){
     const mw = metrics.actualBoundingBoxLeft + metrics.actualBoundingBoxRight;
     const mh = metrics.actualBoundingBoxAscent + metrics.actualBoundingBoxDescent;
     
-    const tx = mx * 2;
+    const tx = mx;
     const ty = my;
 
     typeContext.save();
@@ -182,8 +183,8 @@ function draw(){
       const col = i % cols;
       const row = Math.floor(i / cols);
 
-      const x = col * cell + margx + cell * 0.5;
-      const y = row * cell + height*0.3;
+      const x = col * cell + margx;
+      const y = row * cell + margy + 200;
 
       let angle = Math.atan2(y - cursY, x - cursX);
       
@@ -194,7 +195,7 @@ function draw(){
 
         context.fillStyle = `rgb(${r}, ${g}, ${b})`;
         
-        if(r < 200){
+        if(r < 222){
           flag[i] = true;
           /*
           console.log("r " + r);
