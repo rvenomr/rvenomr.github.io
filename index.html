@@ -1,6 +1,24 @@
 <html>
-  <body>
-    <canvas id = "canvas" width="1000" height="500"></canvas>
+<head>
+<META name="viewport" content="initial-scale=0.5, user-scalable=no"> 
+<style>
+  * {
+    margin: 0;
+    padding: 0;
+      }
+  #container {
+    margin: 0 auto;
+    overflow: hidden;
+  }
+  canvas {
+   display: block;
+  }
+  </style>
+</head>
+<body style="background-color:black;">
+  <div id="container">
+    <canvas id = "canvas" width="800" height="600"></canvas>
+  </div>
     <script>
 const degToRad = (degrees) => {
   return degrees / 180 * Math.PI;
@@ -10,134 +28,221 @@ const randomRange = (min, max) => {
   return Math.random() * (max - min) + min;
 }
 
-  class Vector {
-  constructor(x, y) {
-    this.x = x;
-    this.y = y;  
-  }
-
-  getDistance(v) {
-    const dx = this.x - v.x;
-    const dy = this.y - v.y;
-    return Math.sqrt(dx * dx + dy * dy);
-  }
+const getTouchPos = (canvasDom, touchEvent) => {
+  var rect = canvasDom.getBoundingClientRect();
+  return {
+    x: touchEvent.touches[0].clientX - rect.left,
+    y: touchEvent.touches[0].clientY - rect.top
+  };
 }
 
-class Agent {
-  constructor(x, y) {
-    this.pos = new Vector(x, y);
-    this.vel = new Vector(randomRange(-1,1), randomRange(-1,1));
-    this.radius = randomRange(4, 12);
-  }
+let text = "TOUCH ME"
+let fontSize = 12;
+let fontFamily = 'serif';
+let flag = [];
 
-  bounce(width, height) {
-    if (this.pos.x <= 0 || this.pos.x >= width)  this.vel.x *= -1;
-    if (this.pos.y <= 0 || this.pos.y >= height) this.vel.y *= -1;
-  }
-
-  wrap(width, height) {
-    if (this.pos.x > width) this.pos.x = 0;
-    if (this.pos.y > height) this.pos.y = 0;
-    if (this.pos.x < 0) this.pos.x = width;
-    if (this.pos.y < 0) this.pos.y = height;
-  }
-
-  update() {
-    this.pos.x += this.vel.x;
-    this.pos.y += this.vel.y;
-  }
-
-  draw(context) {
-    context.save();
-    context.translate(this.pos.x, this.pos.y);
-
-    context.lineWidth = 4;
-
-    context.beginPath();
-    context.arc(0, 0, this.radius, 0, Math.PI * 2);
-    context.fill();
-    context.stroke();
-    context.restore();
-  }
-}
-
-var audio1 = new Audio('01_l.wav');
-var audio2 = new Audio('02_l.wav');
-var audio3 = new Audio('03_l.wav');
-var audio4 = new Audio('04.wav');
+let cursX;
+let cursY;
 var canvas = document.getElementById("canvas");
+var width;
+var height;
 var context = canvas.getContext("2d");
-const agents = [];
+var isToucheEnd = false;
+var isTouchDevice = false;
 
-function init() {
-  console.log ("JAVASCRIPT");
+window.addEventListener("touchstart", function (e) {
+  isTouchDevice = true;
+  var touch = e.touches[0]
+  //e.preventDefault()
+  var rect = canvas.getBoundingClientRect();
+  var mouseEvent = new MouseEvent("mousedown", {
+    clientX: touch.clientX - rect.left,
+    clientY: touch.clientY - rect.top
+  });
+  cursX = touch.clientX - rect.left,
+  cursY = touch.clientY - rect.top;
+  //console.log(cursX)
+  //console.log(cursY)
+  console.log("touchstart")
+  canvas.dispatchEvent(mouseEvent);
+}, false);
 
-  for(let i = 0; i < 20; i++) {
-    const x = randomRange(0, canvas.width);
-    const y = randomRange(0, canvas.height);
+window.addEventListener("touchend", function (e) {
+  isTouchDevice = true;
+  //e.preventDefault()
+  var mouseEvent = new MouseEvent("mouseup", {});
+  console.log("touchend");
+  isToucheEnd = true;
+  canvas.dispatchEvent(mouseEvent);
+}, false);
 
-    agents.push(new Agent(x, y));
+window.addEventListener("touchmove", function (e) {
+  isTouchDevice = true;
+  //e.preventDefault()
+  var touch = e.touches[0]
+  var rect = canvas.getBoundingClientRect();
+  var mouseEvent = new MouseEvent("mousemove", {
+    clientX: touch.clientX - rect.left,
+    clientY: touch.clientY - rect.top
+  });
+  cursX = touch.clientX - rect.left;
+  cursY = touch.clientY - rect.top;
+  console.log(cursX)
+  console.log(touch.clientX)
+  canvas.dispatchEvent(mouseEvent);
+  draw();
+}, false);
+
+window.addEventListener("mousemove", function(e) {
+  var rect = canvas.getBoundingClientRect();
+  if (isToucheEnd){
+    cursX = e.pageX - rect.left;
+    cursY = e.pageY - rect.top
+    isToucheEnd = false;
+     console.log("MOUSEMOVE after TOUCHEND")
+  } else if(isTouchDevice){
+    cursX = e.pageX
+    cursY = e.pageY
+    console.log("MOUSEMOVE");
+  } else {
+    cursX = e.pageX - rect.left;
+    cursY = e.pageY - rect.top
+    console.log("MOUSEMOVE");
   }
-  window.requestAnimationFrame(draw);
+  draw();
+})
+
+window.addEventListener("unload", function(){
+  flag = [];
+  draw();
+}, false);
+
+const getDistance =(x1, y1, x2, y2) => {
+    const dx = x1 - x2;
+    const dy = y1 - y2;
+    return Math.sqrt(dx * dx + dy * dy);
 }
 
+const typeCanvas = document.createElement('canvas');
+const typeContext = typeCanvas.getContext('2d') //{willReadFrequently: true});
 
 function draw(){
-  console.log ("Draw");
-    context.fillStyle = 'white';
-    context.fillRect(0, 0, canvas.width, canvas.height);
-    var counter = 0;
+  //canvas.width = window.innerWidth;
+  //canvas.height = window.innerHeight;
+  width = canvas.width;
+  height = canvas.height;
+  const cell = 10;
+  const gridw = width  * 0.8;
+  const gridh = height * 0.8
+  const cols = Math.floor(gridw / cell);
 
-    for (let i = 0; i < agents.length; i++) {
-      const agent = agents[i];
+  const rows = Math.floor(gridh / cell);
+  const numCells = cols * rows;
 
+  typeCanvas.width = cols;
+  typeCanvas.height = rows;
+
+  const margx = (width - gridw) * 0.5;
+  const margy = (height - gridh) * 0.5;
+
+  typeContext.fillStyle = 'white';
+  typeContext.fillRect(0, 0, cols, rows);
+
+    fontSize = fontSize;
+
+    typeContext.fillStyle = 'black';
+    typeContext.font = `${fontSize}px ${fontFamily}`;
+    typeContext.textBaseline = 'top';
+
+    const metrics = typeContext.measureText(text);
+    const mx = metrics.actualBoundingBoxLeft * -1;
+    const my = metrics.actualBoundingBoxAscent * -1;
+    const mw = metrics.actualBoundingBoxLeft + metrics.actualBoundingBoxRight;
+    const mh = metrics.actualBoundingBoxAscent + metrics.actualBoundingBoxDescent;
+    
+    const tx = mx;
+    const ty = my;
+
+    typeContext.save();
+    typeContext.translate(tx, ty);
+
+    typeContext.beginPath();
+    typeContext.stroke();
+
+    typeContext.fillText(text, 0, 0);
+    typeContext.restore();
+
+    const typeData = typeContext.getImageData(0, 0, cols, rows).data;
+    context.fillStyle = 'black';
+    context.drawImage(typeCanvas, 0, 0);
+    context.fillRect(0, 0, width, height);
+    context.textBaseline = 'middle';
+    context.textAlign = 'center';
+
+    for (let i = 0; i <= typeData.length/4; i++) {
+      const col = i % cols;
+      const row = Math.floor(i / cols);
+
+      const x = col * cell + margx;
+      const y = row * cell + margy + 200;
+
+      let angle = Math.atan2(y - cursY, x - cursX);
       
-      for (let j = i + 1; j < agents.length; j++) {
-        const other = agents[j];
+        const r = typeData[i * 4 + 0];
+        const g = typeData[i * 4 + 1];
+        const b = typeData[i * 4 + 2];
+        const a = typeData[i * 4 + 3];
 
-        const dist = agent.pos.getDistance(other.pos);
-
-        if (dist > 200) {continue;}
-
-      
-        context.lineWidth = 12;//math.mapRange(dist, 0, 200, 12, 1);
-
-        context.beginPath();
-        context.moveTo(agent.pos.x, agent.pos.y);
-        context.lineTo(other.pos.x, other.pos.y);
-        context.stroke();
-      }
-    }
+        context.fillStyle = `rgb(${r}, ${g}, ${b})`;
         
-    agents.forEach(agent => {
-      agent.update();
-      agent.draw(context);
-      agent.wrap(canvas.width, canvas.height);
-    });
-    /*
-    counter = randomRange(0, 4)
-          if(counter < 1){
-              audio1.play();
-              //counter++;
-            } else if (counter < 2 && counter > 1){
-              audio2.play();
-              //counter++;
-            } else if (counter < 3 && counter > 2){
-              audio3.play();
-              //counter++;
-            } else if (counter >= 3){
-              audio4.play();
-              //counter==0;
-            }
-    */
-  window.requestAnimationFrame(draw);
+        if(r < 222){
+          flag[i] = true;
+          /*
+          console.log("r " + r);
+          console.log("g " + g);
+          console.log("b " + b);
+          console.log("a " + a);
+          */
+        } else {
+          flag[i] = false;
+          }
+      if(flag[i]){
+        context.save();
+        context.translate(x, y);
+        context.rotate(angle);
+        context.scale(2, 2);
+        context.beginPath();
+        let c = randomRange(1, 3.5);
+        
+        color = ''
+        if(getDistance(x, y, cursX, cursY) > 150){
+          color = 'rgb(82, 78, 238)';
+      
+        } else {
+          //context.fillStyle = 'rgb(159, 179, 238)';
+          let c =randomRange(1,2)
+          if(c > 1.5){
+            color =  'rgb(203, 0, 104)';
+          } else {
+            color = 'rgb(244, 232, 0)';
+          }
+        }
+        context.fillStyle = color;
+        context.beginPath();
+
+        //context.lineCap = params.lineCap;
+
+        //context.moveTo(cell * -0.5, 0);
+        //context.lineTo(cell *  0.5, 0);
+        context.rect(-cell * 0.5, -cell * 0.5, cell * 0.15, cell * 1.1);
+        //context.arc(0, 0, random.range(4, 12), 0, Math.PI * 2);
+        context.fill();
+        //context.stroke();
+        context.restore();
+        context.restore();
+    }
+  }
 }
-
-init();
-
-
-
-
     </script>
   </body>
 </html>
