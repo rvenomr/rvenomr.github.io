@@ -1,248 +1,571 @@
-<html>
+<!DOCTYPE html>
+<html lang="en">
 <head>
-<META name="viewport" content="initial-scale=0.5, user-scalable=no"> 
-<style>
-  * {
-    margin: 0;
-    padding: 0;
-      }
-  #container {
-    margin: 0 auto;
-    overflow: hidden;
-  }
-  canvas {
-   display: block;
-  }
-  </style>
-</head>
-<body style="background-color:black;">
-  <div id="container">
-    <canvas id = "canvas" width="800" height="600"></canvas>
-  </div>
-    <script>
-const degToRad = (degrees) => {
-  return degrees / 180 * Math.PI;
-}
-
-const randomRange = (min, max) => {
-  return Math.random() * (max - min) + min;
-}
-
-const getTouchPos = (canvasDom, touchEvent) => {
-  var rect = canvasDom.getBoundingClientRect();
-  return {
-    x: touchEvent.touches[0].clientX - rect.left,
-    y: touchEvent.touches[0].clientY - rect.top
-  };
-}
-
-let text = "TOUCH ME"
-let fontSize = 12;
-let fontFamily = 'serif';
-let flag = [];
-
-let cursX;
-let cursY;
-var canvas = document.getElementById("canvas");
-var width;
-var height;
-var context = canvas.getContext("2d");
-var isToucheEnd = false;
-var isTouchDevice = false;
-
-window.addEventListener("touchstart", function (e) {
-  isTouchDevice = true;
-  var touch = e.touches[0]
-  //e.preventDefault()
-  var rect = canvas.getBoundingClientRect();
-  var mouseEvent = new MouseEvent("mousedown", {
-    clientX: touch.clientX - rect.left,
-    clientY: touch.clientY - rect.top
-  });
-  cursX = touch.clientX - rect.left,
-  cursY = touch.clientY - rect.top;
-  //console.log(cursX)
-  //console.log(cursY)
-  console.log("touchstart")
-  canvas.dispatchEvent(mouseEvent);
-}, false);
-
-window.addEventListener("touchend", function (e) {
-  isTouchDevice = true;
-  //e.preventDefault()
-  var mouseEvent = new MouseEvent("mouseup", {});
-  console.log("touchend");
-  isToucheEnd = true;
-  canvas.dispatchEvent(mouseEvent);
-}, false);
-
-window.addEventListener("touchmove", function (e) {
-  isTouchDevice = true;
-  //e.preventDefault()
-  var touch = e.touches[0]
-  var rect = canvas.getBoundingClientRect();
-  var mouseEvent = new MouseEvent("mousemove", {
-    clientX: touch.clientX - rect.left,
-    clientY: touch.clientY - rect.top
-  });
-  cursX = touch.clientX - rect.left;
-  cursY = touch.clientY - rect.top;
-  console.log(cursX)
-  console.log(touch.clientX)
-  canvas.dispatchEvent(mouseEvent);
-  draw();
-}, false);
-
-window.addEventListener("mousemove", function(e) {
-  var rect = canvas.getBoundingClientRect();
-  if (isToucheEnd){
-    cursX = e.pageX - rect.left;
-    cursY = e.pageY - rect.top
-    isToucheEnd = false;
-     console.log("MOUSEMOVE after TOUCHEND")
-  } else if(isTouchDevice){
-    cursX = e.pageX
-    cursY = e.pageY
-    console.log("MOUSEMOVE");
-  } else {
-    cursX = e.pageX - rect.left;
-    cursY = e.pageY - rect.top
-    console.log("MOUSEMOVE");
-  }
-  draw();
-})
-
-window.addEventListener("unload", function(){
-  flag = [];
-  draw();
-}, false);
-
-const getDistance =(x1, y1, x2, y2) => {
-    const dx = x1 - x2;
-    const dy = y1 - y2;
-    return Math.sqrt(dx * dx + dy * dy);
-}
-
-const typeCanvas = document.createElement('canvas');
-const typeContext = typeCanvas.getContext('2d') //{willReadFrequently: true});
-
-function draw(){
-  //canvas.width = window.innerWidth;
-  //canvas.height = window.innerHeight;
-  width = canvas.width;
-  height = canvas.height;
-  const cell = 10;
-  const gridw = width  * 0.8;
-  const gridh = height * 0.8
-  const cols = Math.floor(gridw / cell);
-
-  const rows = Math.floor(gridh / cell);
-  const numCells = cols * rows;
-
-  typeCanvas.width = cols;
-  typeCanvas.height = rows;
-
-  const margx = (width - gridw) * 0.5;
-  const margy = (height - gridh) * 0.5;
-
-  typeContext.fillStyle = 'white';
-  typeContext.fillRect(0, 0, cols, rows);
-
-    fontSize = fontSize;
-
-    typeContext.fillStyle = 'black';
-    typeContext.font = `${fontSize}px ${fontFamily}`;
-    typeContext.textBaseline = 'top';
-
-    const metrics = typeContext.measureText(text);
-    const mx = metrics.actualBoundingBoxLeft * -1;
-    const my = metrics.actualBoundingBoxAscent * -1;
-    const mw = metrics.actualBoundingBoxLeft + metrics.actualBoundingBoxRight;
-    const mh = metrics.actualBoundingBoxAscent + metrics.actualBoundingBoxDescent;
-    
-    const tx = mx;
-    const ty = my;
-
-    typeContext.save();
-    typeContext.translate(tx, ty);
-
-    typeContext.beginPath();
-    typeContext.stroke();
-
-    typeContext.fillText(text, 0, 0);
-    typeContext.restore();
-
-    const typeData = typeContext.getImageData(0, 0, cols, rows).data;
-    context.fillStyle = 'black';
-    context.drawImage(typeCanvas, 0, 0);
-    context.fillRect(0, 0, width, height);
-    context.textBaseline = 'middle';
-    context.textAlign = 'center';
-
-    for (let i = 0; i <= typeData.length/4; i++) {
-      const col = i % cols;
-      const row = Math.floor(i / cols);
-
-      const x = col * cell + margx;
-      const y = row * cell + margy + 200;
-
-      let angle = Math.atan2(y - cursY, x - cursX);
-      
-        const r = typeData[i * 4 + 0];
-        const g = typeData[i * 4 + 1];
-        const b = typeData[i * 4 + 2];
-        const a = typeData[i * 4 + 3];
-
-        context.fillStyle = `rgb(${r}, ${g}, ${b})`;
-        
-        if(r < 222){
-          flag[i] = true;
-          /*
-          console.log("r " + r);
-          console.log("g " + g);
-          console.log("b " + b);
-          console.log("a " + a);
-          */
-        } else {
-          flag[i] = false;
-          }
-      if(flag[i]){
-        context.save();
-        context.translate(x, y);
-        context.rotate(angle);
-        context.scale(2, 2);
-        context.beginPath();
-        let c = randomRange(1, 3.5);
-        
-        color = ''
-        if(getDistance(x, y, cursX, cursY) > 150){
-          color = 'rgb(82, 78, 238)';
-      
-        } else {
-          //context.fillStyle = 'rgb(159, 179, 238)';
-          let c =randomRange(1,2)
-          if(c > 1.5){
-            color =  'rgb(203, 0, 104)';
-          } else {
-            color = 'rgb(244, 232, 0)';
-          }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TP-7 Inspired Playback</title>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background-color: #282c34;
+            font-family: 'Arial', sans-serif;
+            color: #e0e0e0;
+            overflow: hidden;
+            margin: 0;
+            user-select: none;
+            -webkit-user-select: none; /* Safari */
+            -moz-user-select: none; /* Firefox */
+            -ms-user-select: none; /* IE10+ */
         }
-        context.fillStyle = color;
-        context.beginPath();
 
-        //context.lineCap = params.lineCap;
+        .container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background-color: #3b4047;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            width: 90%;
+            max-width: 400px;
+            box-sizing: border-box;
+            position: relative;
+        }
 
-        //context.moveTo(cell * -0.5, 0);
-        //context.lineTo(cell *  0.5, 0);
-        context.rect(-cell * 0.5, -cell * 0.5, cell * 0.15, cell * 1.1);
-        //context.arc(0, 0, random.range(4, 12), 0, Math.PI * 2);
-        context.fill();
-        //context.stroke();
-        context.restore();
-        context.restore();
-    }
-  }
-}
+        .header {
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .brand {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #7aff00; /* Teenage Engineering green */
+        }
+
+        .status-lights {
+            display: flex;
+            gap: 8px;
+        }
+
+        .status-light {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background-color: #555;
+            box-shadow: inset 0 0 3px rgba(0, 0, 0, 0.5);
+        }
+
+        .status-light.active {
+            background-color: #7aff00;
+            box-shadow: 0 0 8px #7aff00, inset 0 0 3px #7aff00;
+        }
+
+        .disc-area {
+            position: relative;
+            width: 250px;
+            height: 250px;
+            background-color: #222;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 30px;
+            box-shadow: inset 0 0 15px rgba(0, 0, 0, 0.7), 0 5px 15px rgba(0, 0, 0, 0.3);
+            border: 2px solid #555;
+        }
+
+        .disc-outer {
+            width: 230px;
+            height: 230px;
+            border-radius: 50%;
+            background: linear-gradient(145deg, #1f2228, #282c34);
+            box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.8);
+            position: relative;
+            cursor: grab;
+            transition: transform 0.05s ease-out; /* For subtle visual feedback on touch */
+        }
+
+        .disc-center {
+            position: absolute;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background-color: #444;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.7), 0 2px 5px rgba(0, 0, 0, 0.3);
+            border: 1px solid #666;
+            z-index: 10;
+        }
+
+        .disc-center-dot {
+            width: 15px;
+            height: 15px;
+            border-radius: 50%;
+            background-color: #888;
+            box-shadow: inset 0 0 3px rgba(0, 0, 0, 0.5);
+        }
+
+        .disc-marker {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 10px;
+            height: 10px;
+            background-color: #7aff00;
+            border-radius: 50%;
+            transform-origin: 0 0;
+            transform: translate(-50%, -50%) rotate(0deg) translateY(-100px); /* Adjust based on disc size */
+            box-shadow: 0 0 5px #7aff00;
+        }
+
+        .controls {
+            display: flex;
+            gap: 20px;
+            margin-top: 20px;
+            width: 100%;
+            justify-content: center;
+        }
+
+        .control-button {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background-color: #555;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            box-shadow: 0 3px 8px rgba(0, 0, 0, 0.4), inset 0 2px 5px rgba(255, 255, 255, 0.2);
+            transition: background-color 0.2s, transform 0.1s;
+        }
+
+        .control-button:active {
+            background-color: #666;
+            transform: translateY(2px);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4), inset 0 1px 3px rgba(255, 255, 255, 0.1);
+        }
+
+        .control-button svg {
+            fill: #e0e0e0;
+            width: 24px;
+            height: 24px;
+        }
+
+        #fileInput {
+            display: none;
+        }
+
+        .file-upload-label {
+            background-color: #7aff00;
+            color: #282c34;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 25px;
+            font-weight: bold;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+            transition: background-color 0.2s;
+        }
+
+        .file-upload-label:hover {
+            background-color: #6ccc00;
+        }
+
+        .info-text {
+            margin-top: 15px;
+            font-size: 0.9em;
+            color: #bbb;
+        }
+
+        .playback-info {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            font-size: 0.9em;
+            color: #aaa;
+            text-align: right;
+        }
+
+        .playback-info span {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="brand">TE-INSPIRED</div>
+            <div class="status-lights">
+                <div class="status-light" id="inputStatus"></div>
+                <div class="status-light" id="playbackStatus"></div>
+            </div>
+        </div>
+
+        <div class="disc-area">
+            <div class="disc-outer" id="disc">
+                <div class="disc-marker"></div>
+                <div class="disc-center">
+                    <div class="disc-center-dot"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="controls">
+            <div class="control-button" id="playButton">
+                <svg viewBox="0 0 24 24">
+                    <path d="M8 5v14l11-7z"/>
+                </svg>
+            </div>
+            <div class="control-button" id="pauseButton">
+                <svg viewBox="0 0 24 24">
+                    <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>
+                </svg>
+            </div>
+        </div>
+
+        <input type="file" id="fileInput" accept="audio/*">
+        <label for="fileInput" class="file-upload-label">Upload Audio File</label>
+        <div class="info-text" id="fileNameDisplay">No file selected.</div>
+
+        <div class="playback-info">
+            Speed: <span id="speedDisplay">1.00</span><br>
+            Pitch: <span id="pitchDisplay">1.00</span>
+        </div>
+    </div>
+
+    <script>
+        const disc = document.getElementById('disc');
+        const playButton = document.getElementById('playButton');
+        const pauseButton = document.getElementById('pauseButton');
+        const fileInput = document.getElementById('fileInput');
+        const fileNameDisplay = document.getElementById('fileNameDisplay');
+        const speedDisplay = document.getElementById('speedDisplay');
+        const pitchDisplay = document.getElementById('pitchDisplay');
+        const inputStatusLight = document.getElementById('inputStatus');
+        const playbackStatusLight = document.getElementById('playbackStatus');
+        const discMarker = disc.querySelector('.disc-marker');
+
+        let audioContext;
+        let audioBuffer = null;
+        let audioSource = null;
+        let pitchShifter = null; // We'll use a standard Web Audio API PannerNode for basic pitch and speed
+        let lastTimestamp = 0;
+        let currentPlaybackSpeed = 1.0;
+        let isPlaying = false;
+        let startTime = 0; // When the current playback started
+        let startOffset = 0; // Where in the buffer playback started
+        let animationFrameId = null;
+        let timeoutId = null;
+
+        const MIN_PLAYBACK_SPEED = 0.1;
+        const MAX_PLAYBACK_SPEED = 2.0;
+        const DISC_DRAG_SENSITIVITY = 0.005; // How much angle change affects speed
+        const PITCH_SENSITIVITY = 0.0005; // How much speed affects pitch (proportionally)
+
+        const TAPE_STOP_DURATION = 500; // ms for tape stop effect
+
+        // Initialize AudioContext on user gesture
+        function initializeAudioContext() {
+            if (!audioContext) {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                if (audioContext.state === 'suspended') {
+                    audioContext.resume();
+                }
+            }
+        }
+
+        // Handle file upload
+        fileInput.addEventListener('change', (event) => {
+            const file = event.target.files[0];
+            if (file) {
+                fileNameDisplay.textContent = file.name;
+                inputStatusLight.classList.add('active');
+                const reader = new FileReader();
+                reader.onload = async (e) => {
+                    initializeAudioContext(); // Ensure context is ready before decoding
+                    try {
+                        audioBuffer = await audioContext.decodeAudioData(e.target.result);
+                        playbackStatusLight.classList.remove('active'); // Reset playback status
+                        isPlaying = false;
+                        resetPlayback();
+                        console.log("Audio file loaded and decoded:", file.name);
+                    } catch (error) {
+                        console.error("Error decoding audio data:", error);
+                        alert("Could not decode audio. Please try another file.");
+                        fileNameDisplay.textContent = "Error decoding file.";
+                        inputStatusLight.classList.remove('active');
+                    }
+                };
+                reader.readAsArrayBuffer(file);
+            } else {
+                fileNameDisplay.textContent = "No file selected.";
+                inputStatusLight.classList.remove('active');
+                audioBuffer = null;
+                resetPlayback();
+            }
+        });
+
+        function createSource() {
+            if (audioSource) {
+                audioSource.stop();
+                audioSource.disconnect();
+            }
+            if (audioBuffer && audioContext) {
+                audioSource = audioContext.createBufferSource();
+                audioSource.buffer = audioBuffer;
+
+                if (!pitchShifter) {
+                    // Use a simple GainNode for volume control or other effects if needed
+                    // For pitch/speed, we manipulate playbackRate directly.
+                    // This creates a PitchShifter structure that can be passed to the source.
+                    // A more advanced pitch shifter would use a dedicated library or algorithm (e.g., Web Audio API AudioWorklet).
+                    // For this example, changing playbackRate also changes pitch.
+                    pitchShifter = audioContext.createGain(); // Placeholder, direct connection for playbackRate
+                    // Alternatively, for true pitch shifting without speed change, you'd integrate a third-party lib 
+                    // like pitch-js or implement a spectral processing algorithm with an AudioWorklet.
+                    // For this simple example, we accept that speed and pitch are linked.
+                }
+
+                audioSource.connect(pitchShifter); // Connect source to the "pitch shifter" (placeholder)
+                pitchShifter.connect(audioContext.destination);
+
+                audioSource.onended = () => {
+                    console.log("Playback ended.");
+                    isPlaying = false;
+                    playbackStatusLight.classList.remove('active');
+                    resetPlayback();
+                };
+            }
+        }
+
+        function startPlayback(offset = 0) {
+            if (!audioBuffer) {
+                alert("Please upload an audio file first!");
+                return;
+            }
+            if (audioContext.state === 'suspended') {
+                audioContext.resume();
+            }
+
+            if (isPlaying) {
+                // If already playing, stop the current one cleanly before restarting
+                audioSource.stop(0); // Stop immediately
+                audioSource.disconnect();
+            }
+
+            createSource();
+            if (!audioSource) return;
+
+            audioSource.playbackRate.value = currentPlaybackSpeed;
+            startTime = audioContext.currentTime;
+            startOffset = offset;
+            audioSource.start(0, startOffset); // Start from the offset
+            isPlaying = true;
+            playbackStatusLight.classList.add('active');
+            updatePlaybackInfo();
+            console.log(`Playback started at offset ${offset.toFixed(2)}s with speed ${currentPlaybackSpeed.toFixed(2)}`);
+        }
+
+        function pausePlayback() {
+            if (isPlaying && audioSource) {
+                audioSource.stop(0);
+                audioSource.disconnect();
+                startOffset += (audioContext.currentTime - startTime) * currentPlaybackSpeed;
+                isPlaying = false;
+                playbackStatusLight.classList.remove('active');
+                console.log("Playback paused.");
+            }
+        }
+
+        function resetPlayback() {
+            pausePlayback();
+            startOffset = 0;
+            currentPlaybackSpeed = 1.0;
+            updatePlaybackInfo();
+            discMarker.style.transform = `translate(-50%, -50%) rotate(0deg) translateY(-100px)`;
+            console.log("Playback reset.");
+        }
+
+        function applyTapeStopEffect() {
+            if (!isPlaying && audioSource) {
+                // Ensure audioSource is still valid for this short burst
+                const tempSource = audioContext.createBufferSource();
+                tempSource.buffer = audioBuffer;
+                tempSource.connect(audioContext.destination);
+
+                // Calculate the start point for the last 5 seconds or less
+                let tapeStopStartOffset = startOffset - 5;
+                if (tapeStopStartOffset < 0) {
+                    tapeStopStartOffset = 0;
+                }
+
+                tempSource.start(0, tapeStopStartOffset);
+
+                // Gradual reduction of playbackRate
+                const rampDuration = TAPE_STOP_DURATION / 1000;
+                tempSource.playbackRate.linearRampToValueAtTime(0.01, audioContext.currentTime + rampDuration); // Ramp to near zero
+
+                // Stop the source after the ramp
+                tempSource.stop(audioContext.currentTime + rampDuration + 0.1); // Give a little extra time
+                console.log("Applying tape stop effect.");
+            }
+        }
+
+        playButton.addEventListener('click', () => {
+            initializeAudioContext();
+            startPlayback(startOffset);
+        });
+
+        pauseButton.addEventListener('click', () => {
+            pausePlayback();
+            applyTapeStopEffect(); // Apply tape stop on pause
+        });
+
+        // Disc interaction
+        let isDragging = false;
+        let lastAngle = 0;
+        let initialDiscAngle = 0; // To store the disc's visual angle at drag start
+        let dragStartX = 0;
+        let dragStartY = 0;
+
+        function getAngle(x, y, centerX, centerY) {
+            return Math.atan2(y - centerY, x - centerX) * (180 / Math.PI);
+        }
+
+        function updateDiscRotation(newAngle) {
+            discMarker.style.transform = `translate(-50%, -50%) rotate(${newAngle}deg) translateY(-100px)`;
+        }
+
+        function handleStart(clientX, clientY) {
+            initializeAudioContext();
+            if (!audioBuffer) {
+                alert("Please upload an audio file first!");
+                return;
+            }
+
+            isDragging = true;
+            disc.style.cursor = 'grabbing';
+            clearTimeout(timeoutId); // Clear any pending tape stop effect
+
+            const discRect = disc.getBoundingClientRect();
+            const centerX = discRect.left + discRect.width / 2;
+            const centerY = discRect.top + discRect.height / 2;
+            lastAngle = getAngle(clientX, clientY, centerX, centerY);
+            initialDiscAngle = parseFloat(discMarker.style.transform.replace(/.*rotate\((.*)deg\).*/, '$1')) || 0; // Get current visual angle
+            dragStartX = clientX;
+            dragStartY = clientY;
+            console.log("Drag started.");
+        }
+
+        function handleMove(clientX, clientY) {
+            if (!isDragging || !audioBuffer) return;
+
+            const discRect = disc.getBoundingClientRect();
+            const centerX = discRect.left + discRect.width / 2;
+            const centerY = discRect.top + discRect.height / 2;
+
+            const currentAngle = getAngle(clientX, clientY, centerX, centerY);
+            let angleDelta = currentAngle - lastAngle;
+
+            // Handle angle wrap-around (e.g., from 170 to -170 degrees)
+            if (angleDelta > 180) angleDelta -= 360;
+            if (angleDelta < -180) angleDelta += 360;
+
+            const normalizedAngleDelta = angleDelta / 360; // Convert to fraction of a full circle
+
+            // Calculate speed based on angle change
+            currentPlaybackSpeed += normalizedAngleDelta * DISC_DRAG_SENSITIVITY * 100; // Multiply to make more sensitive initially
+            currentPlaybackSpeed = Math.max(MIN_PLAYBACK_SPEED, Math.min(MAX_PLAYBACK_SPEED, currentPlaybackSpeed));
+
+            // Update pitch relative to speed
+            // When playbackRate changes, pitch also changes naturally in Web Audio API.
+            // We just reflect this change.
+            const currentPitch = currentPlaybackSpeed; // Simple mapping for direct playbackRate control
+
+            speedDisplay.textContent = currentPlaybackSpeed.toFixed(2);
+            pitchDisplay.textContent = currentPitch.toFixed(2);
+
+            if (isPlaying && audioSource) {
+                audioSource.playbackRate.value = currentPlaybackSpeed;
+            } else if (currentPlaybackSpeed > 0.05) { // Start playback if disc is moved significantly from stopped state
+                startPlayback(startOffset);
+            }
+
+            // Update disc rotation for visual feedback
+            const visualRotationAmount = angleDelta; // Rotate the marker visually with drag
+            initialDiscAngle += visualRotationAmount;
+            updateDiscRotation(initialDiscAngle);
+
+            lastAngle = currentAngle;
+        }
+
+        function handleEnd() {
+            if (isDragging) {
+                isDragging = false;
+                disc.style.cursor = 'grab';
+                console.log("Drag ended.");
+
+                // If playback is active and speed is low or stopped, apply tape stop
+                if (isPlaying && currentPlaybackSpeed < 0.15) { // Threshold for considering "stopped" state
+                    applyTapeStopEffect();
+                    pausePlayback(); // Actually pause after effect is initiated
+                } else if (!isPlaying) {
+                    // If no playback, but was intended to stop, restart the 5-sec buffer
+                    timeoutId = setTimeout(() => {
+                        applyTapeStopEffect();
+                        pausePlayback(); // Ensure it pauses even if it briefly started during drag
+                    }, 50); // Small delay to allow final speed update
+                }
+            }
+        }
+
+        // Mouse events
+        disc.addEventListener('mousedown', (e) => {
+            handleStart(e.clientX, e.clientY);
+        });
+
+        document.addEventListener('mousemove', (e) => {
+            handleMove(e.clientX, e.clientY);
+        });
+
+        document.addEventListener('mouseup', () => {
+            handleEnd();
+        });
+
+        // Touch events for mobile compatibility
+        disc.addEventListener('touchstart', (e) => {
+            e.preventDefault(); // Prevent scrolling
+            const touch = e.touches[0];
+            handleStart(touch.clientX, touch.clientY);
+        }, { passive: false }); // Use passive: false to allow preventDefault
+
+        document.addEventListener('touchmove', (e) => {
+            e.preventDefault(); // Prevent scrolling
+            const touch = e.touches[0];
+            handleMove(touch.clientX, touch.clientY);
+        }, { passive: false });
+
+        document.addEventListener('touchend', () => {
+            handleEnd();
+        });
+
+        function updatePlaybackInfo() {
+            speedDisplay.textContent = currentPlaybackSpeed.toFixed(2);
+            pitchDisplay.textContent = currentPlaybackSpeed.toFixed(2); // Since pitch changes with speed here
+        }
+
+        // Initial display update
+        updatePlaybackInfo();
+
     </script>
-  </body>
+</body>
 </html>
